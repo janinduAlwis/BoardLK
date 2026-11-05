@@ -1,56 +1,106 @@
-# Welcome to your Expo app 👋
+# BoardLK 🏠
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> A modern cross-platform mobile application simplifying boarding and accommodation discovery for university students and young professionals across Sri Lanka.
 
-## Get started
+[![React Native](https://img.shields.io/badge/React_Native-0.86.3-61DAFB?logo=react&logoColor=black)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-v57-000000?logo=expo&logoColor=white)](https://expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Zustand](https://img.shields.io/badge/State-Zustand_5-433e38)](https://zustand-demo.pmnd.rs/)
 
-1. Install dependencies
+---
 
+## 📖 Overview
+
+Finding safe, affordable, and accessible boarding accommodations (annexes, single rooms, apartments) in Sri Lanka is often fragmented across social media groups, classified ads, and physical notice boards. **BoardLK** centralizes and modernizes the search process with an interactive map, real-time pricing markers, localized amenity filters, and direct tenant-to-landlord communication.
+
+---
+
+## ✨ Features
+
+- 🗺️ **Interactive Map Search:** Powered by `react-native-maps` with custom price badges and smooth spring-animated property preview cards.
+- 🎚️ **Custom Touch-Driven Range Slider:** Engineered using native `PanResponder` API for precise, performant 60fps budget filtering.
+- 🔍 **Multi-Criteria Filtering:** Filter by accommodation types (Rooms, Annexes, Apartments) and preferences (Attached Bathroom, Girls Only, Boys Only).
+- 💬 **Context-Aware In-App Messaging:** Direct chat with property owners featuring embedded listing details at the top of the conversation.
+- ⭐ **Community Ratings & Reviews:** Interactive star-rating and review submission system to build landlord-tenant transparency.
+- 💖 **Favorites & Saved Listings:** Instant bookmarking for comparing accommodations offline or on the go.
+- 📱 **Universal Cross-Platform:** Built with Expo Router supporting iOS, Android, and Web platforms.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Core Framework:** [React Native](https://reactnative.dev/) 0.86.3, [React 19](https://react.dev/)
+- **Development Tooling:** [Expo](https://expo.dev/) SDK 57
+- **Navigation:** [Expo Router](https://docs.expo.dev/router/introduction/) (File-based Routing, Typed Routes)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **State Management:** [Zustand](https://github.com/pmndrs/zustand)
+- **Maps & Geolocation:** [react-native-maps](https://github.com/react-native-maps/react-native-maps)
+- **Animations & Gestures:** `react-native-reanimated`, `react-native-gesture-handler`, Native `PanResponder`
+- **Icons:** `@expo/vector-icons` (Feather, FontAwesome, Ionicons)
+
+---
+
+## 📂 Project Structure
+
+```
+BoardLK/
+├── src/
+│   ├── app/                 # Expo Router file-based pages
+│   │   ├── (tabs)/          # Bottom tab navigation (Home, Map, Favorites, Profile, Chat)
+│   │   ├── chat/[id].tsx    # Context-aware chat with property owner
+│   │   ├── property/[id].tsx# Detailed property view & amenity badges
+│   │   ├── filters.tsx      # Modal filter sheet with custom range slider
+│   │   ├── review.tsx       # Star rating and review submission modal
+│   │   ├── login.tsx        # User authentication screen
+│   │   └── _layout.tsx      # Root stack navigation layout
+│   ├── components/          # Reusable UI components
+│   │   ├── RangeSlider.tsx  # Dual-thumb PanResponder range slider
+│   │   ├── PropertyCard.tsx # Listing card component
+│   │   ├── SearchBar.tsx    # Search input with filter action
+│   │   └── FilterPills.tsx  # Horizontal category filter selector
+│   ├── constants/           # Mock properties and theme definitions
+│   ├── hooks/               # Custom platform and color-scheme hooks
+│   └── store/               # Global state management via Zustand
+├── assets/                  # App icons, splash screens, and mock images
+├── app.json                 # Expo project configuration
+└── package.json             # Dependencies and scripts
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (v18 or higher recommended)
+- [Expo Go](https://expo.dev/go) app on your mobile device (iOS / Android) or an emulator.
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/<your-username>/BoardLK.git
+   cd BoardLK
+   ```
+
+2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-2. Start the app
-
+3. **Start the development server:**
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+4. **Run on a device / emulator:**
+   - Scan the QR code with **Expo Go** (Android) or the **Camera app** (iOS).
+   - Press `a` in the terminal to launch on an Android emulator.
+   - Press `i` to launch on an iOS simulator.
+   - Press `w` to launch in the web browser.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 📄 License
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
