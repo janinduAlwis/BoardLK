@@ -79,7 +79,7 @@ BoardLK/
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/<your-username>/BoardLK.git
+   git clone https://github.com/janinduAlwis/BoardLK.git
    cd BoardLK
    ```
 
