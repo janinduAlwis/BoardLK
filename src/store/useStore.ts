@@ -17,13 +17,23 @@ type ChatConversation = {
   lastActivity: number;
 };
 
+export type UserProfile = {
+  fullName: string;
+  headline: string;
+  email: string;
+  workplace: string;
+  avatar: string;
+};
+
 type StoreState = {
   user: User;
+  profile: UserProfile;
   properties: typeof PROPERTIES;
   chatMessages: Record<string, ChatConversation>;
   savedPropertyIds: string[];
   login: (email: string) => void;
   logout: () => void;
+  updateProfile: (updates: Partial<UserProfile>) => void;
   addMessage: (propertyId: string, text: string) => void;
   toggleSaved: (propertyId: string) => void;
   isSaved: (propertyId: string) => boolean;
@@ -31,7 +41,14 @@ type StoreState = {
 };
 
 export const useStore = create<StoreState>((set, get) => ({
-  user: null,
+  user: { email: 'pathum.randika@gmail.com' },
+  profile: {
+    fullName: 'Pathum Randika',
+    headline: 'ICT & Web App Development Student',
+    email: 'pathum.randika@gmail.com',
+    workplace: 'University of Sri Jayewardenepura',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop',
+  },
   properties: PROPERTIES,
   savedPropertyIds: ['1', '2'], // pre-saved for demo
   chatMessages: CHAT_CONVERSATIONS,
@@ -39,6 +56,10 @@ export const useStore = create<StoreState>((set, get) => ({
   login: (email) => set({ user: { email } }),
   
   logout: () => set({ user: null }),
+
+  updateProfile: (updates) => set((state) => ({
+    profile: { ...state.profile, ...updates },
+  })),
   
   toggleSaved: (propertyId) => set((state) => {
     const already = state.savedPropertyIds.includes(propertyId);
