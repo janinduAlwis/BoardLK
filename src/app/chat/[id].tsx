@@ -13,7 +13,10 @@ export default function ChatScreen() {
   
   const properties = useStore(state => state.properties);
   const addMessage = useStore(state => state.addMessage);
-  const messages = useStore(state => state.chatMessages[propertyId] || []);
+  const messages = useStore(state => {
+    const conv = state.chatMessages[propertyId];
+    return conv ? conv.messages : [];
+  });
 
   const property = properties.find(p => p.id === propertyId) || properties[0];
 
@@ -36,10 +39,10 @@ export default function ChatScreen() {
           </TouchableOpacity>
           <View style={styles.headerTitle}>
             <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1974&auto=format&fit=crop' }} 
+              source={{ uri: property.ownerAvatar }} 
               style={styles.avatar} 
             />
-            <Text style={styles.ownerName}>Kamal Perera</Text>
+            <Text style={styles.ownerName}>{property.ownerName}</Text>
           </View>
           <View style={styles.rightPlaceholder} />
         </View>

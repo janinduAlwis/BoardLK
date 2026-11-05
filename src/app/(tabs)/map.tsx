@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { View, StyleSheet, Dimensions, Text, TouchableOpacity, Animated, Image } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { Stack, useRouter } from 'expo-router';
-import { FontAwesome, Feather } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
 
 import SearchBar from '@/components/SearchBar';
 import { useStore } from '@/store/useStore';
@@ -11,33 +11,78 @@ const { width, height } = Dimensions.get('window');
 
 export default function MapScreen() {
   const router = useRouter();
+  const mapRef = useRef<MapView>(null);
   const properties = useStore(state => state.properties);
-  const [selectedProperty, setSelectedProperty] = useState<typeof properties[0] | null>(null);
-  const cardAnim = useRef(new Animated.Value(-400)).current;
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const showCard = (prop: typeof properties[0]) => {
-    setSelectedProperty(prop);
-    Animated.spring(cardAnim, {
-      toValue: 0,
-      useNativeDriver: true,
-      tension: 80,
-      friction: 12,
-    }).start();
-  };
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.96)).current;
 
-  const hideCard = () => {
-    Animated.timing(cardAnim, {
-      toValue: -400,
-      duration: 250,
-      useNativeDriver: true,
-    }).start(() => setSelectedProperty(null));
-  };
+  const selectedProperty = properties.find(p => p.id === selectedId) || null;
+
+  const showCard = useCallback((prop: typeof properties[0]) => {
+    setSelectedId(prop.id);
+
+    // Smoothly pan map so the selected price label sits right below the card
+    mapRef.current?.animateToRegion({
+      latitude: prop.lat + 0.0055,
+      longitude: prop.lng,
+      latitudeDelta: 0.035,
+      longitudeDelta: 0.02,
+    }, 350);
+
+    fadeAnim.stopAnimation();
+    scaleAnim.stopAnimation();
+    fadeAnim.setValue(0);
+    scaleAnim.setValue(0.96);
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 100,
+        friction: 14,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, scaleAnim]);
+
+  const hideCard = useCallback(() => {
+    fadeAnim.stopAnimation();
+    scaleAnim.stopAnimation();
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0.96,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setSelectedId(null);
+    });
+  }, [fadeAnim, scaleAnim]);
+
+  const handleMapPress = useCallback(() => {
+    if (selectedId) {
+      hideCard();
+    }
+  }, [selectedId, hideCard]);
 
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <MapView
+        ref={mapRef}
         style={styles.map}
         initialRegion={{
           latitude: 6.8649,
@@ -45,35 +90,37 @@ export default function MapScreen() {
           latitudeDelta: 0.04,
           longitudeDelta: 0.02,
         }}
-        onPress={hideCard}
+        onPress={handleMapPress}
+        onPanDrag={handleMapPress}
       >
         {properties.map((prop) => (
           <Marker
             key={prop.id}
             coordinate={{ latitude: prop.lat, longitude: prop.lng }}
-            onPress={() => showCard(prop)}
-            tracksViewChanges={false}
+            onPress={(e) => {
+              e.stopPropagation();
+              showCard(prop);
+            }}
+            tracksViewChanges={true}
+            stopPropagation={true}
           >
             <View style={styles.markerContainer}>
               <View style={[
                 styles.markerBubble,
-                selectedProperty?.id === prop.id && styles.markerBubbleSelected
+                selectedId === prop.id && styles.markerBubbleSelected
               ]}>
                 <Text style={[
                   styles.markerText,
-                  selectedProperty?.id === prop.id && styles.markerTextSelected
+                  selectedId === prop.id && styles.markerTextSelected
                 ]}>
                   Rs. {prop.price}
                 </Text>
               </View>
               <View style={[
                 styles.markerArrow,
-                selectedProperty?.id === prop.id && styles.markerArrowSelected
+                selectedId === prop.id && styles.markerArrowSelected
               ]} />
-              <View style={[
-                styles.markerDot,
-                selectedProperty?.id === prop.id && styles.markerDotSelected
-              ]} />
+              <View style={styles.markerDot} />
             </View>
           </Marker>
         ))}
@@ -87,19 +134,22 @@ export default function MapScreen() {
         />
       </View>
 
-      {/* Property Card slides in from top */}
+      {/* Only ONE single property card appears close above the selected price label */}
       {selectedProperty && (
-        <Animated.View style={[styles.cardContainer, { transform: [{ translateY: cardAnim }] }]}>
+        <Animated.View
+          style={[
+            styles.cardContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }],
+            },
+          ]}
+        >
           <TouchableOpacity
             activeOpacity={0.97}
             style={styles.card}
             onPress={() => router.push(`/property/${selectedProperty.id}`)}
           >
-            {/* Close button */}
-            <TouchableOpacity style={styles.closeBtn} onPress={hideCard}>
-              <Feather name="x" size={18} color="#000" />
-            </TouchableOpacity>
-
             <Image source={{ uri: selectedProperty.image }} style={styles.cardImage} />
 
             <View style={styles.cardContent}>
@@ -110,8 +160,8 @@ export default function MapScreen() {
                   <FontAwesome
                     key={star}
                     name={star <= Math.round(selectedProperty.rating) ? 'star' : 'star-o'}
-                    size={14}
-                    color="#F5A623"
+                    size={15}
+                    color={star <= Math.round(selectedProperty.rating) ? '#F5A623' : '#D1D1D6'}
                   />
                 ))}
                 <Text style={styles.ratingText}>{selectedProperty.rating.toFixed(1)}</Text>
@@ -155,45 +205,34 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     position: 'absolute',
-    top: 120,
+    top: 114,
     left: 16,
     right: 16,
     zIndex: 20,
-  },
-  card: {
-    backgroundColor: '#FFF',
-    borderRadius: 20,
-    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 18,
     elevation: 8,
   },
-  closeBtn: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    zIndex: 10,
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    overflow: 'hidden',
   },
   cardImage: {
     width: '100%',
-    height: 200,
+    height: 190,
+    borderRadius: 16,
     resizeMode: 'cover',
   },
   cardContent: {
-    padding: 16,
+    paddingHorizontal: 4,
+    paddingTop: 12,
+    paddingBottom: 4,
   },
   cardTitle: {
     fontSize: 18,
@@ -204,7 +243,7 @@ const styles = StyleSheet.create({
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: 3,
     marginBottom: 6,
   },
   ratingText: {
@@ -231,8 +270,8 @@ const styles = StyleSheet.create({
   contactBtn: {
     backgroundColor: '#0F0F0F',
     paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+    paddingHorizontal: 18,
+    borderRadius: 24,
   },
   contactBtnText: {
     color: '#FFF',
@@ -245,12 +284,12 @@ const styles = StyleSheet.create({
   },
   markerBubble: {
     backgroundColor: '#FFF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.18,
     shadowRadius: 4,
     elevation: 4,
   },
@@ -283,10 +322,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#8E8E93',
+    backgroundColor: '#000',
     marginTop: 2,
-  },
-  markerDotSelected: {
-    backgroundColor: '#0F0F0F',
   },
 });

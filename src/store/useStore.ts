@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { PROPERTIES, CHAT_MESSAGES } from '@/constants/mockData';
+import { PROPERTIES, CHAT_CONVERSATIONS } from '@/constants/mockData';
 
 type User = {
   email: string;
@@ -12,25 +12,29 @@ type Message = {
   timestamp: string;
 };
 
+type ChatConversation = {
+  messages: Message[];
+  lastActivity: number;
+};
+
 type StoreState = {
   user: User;
   properties: typeof PROPERTIES;
-  chatMessages: Record<string, Message[]>; // Keyed by property ID
+  chatMessages: Record<string, ChatConversation>;
   savedPropertyIds: string[];
   login: (email: string) => void;
   logout: () => void;
   addMessage: (propertyId: string, text: string) => void;
   toggleSaved: (propertyId: string) => void;
   isSaved: (propertyId: string) => boolean;
+  getMessages: (propertyId: string) => Message[];
 };
 
 export const useStore = create<StoreState>((set, get) => ({
   user: null,
   properties: PROPERTIES,
   savedPropertyIds: ['1', '2'], // pre-saved for demo
-  chatMessages: {
-    '1': CHAT_MESSAGES, // Pre-fill with mock data for property 1
-  },
+  chatMessages: CHAT_CONVERSATIONS,
   
   login: (email) => set({ user: { email } }),
   
@@ -47,8 +51,13 @@ export const useStore = create<StoreState>((set, get) => ({
 
   isSaved: (propertyId) => get().savedPropertyIds.includes(propertyId),
 
+  getMessages: (propertyId) => {
+    const conv = get().chatMessages[propertyId];
+    return conv ? conv.messages : [];
+  },
+
   addMessage: (propertyId, text) => set((state) => {
-    const existingMessages = state.chatMessages[propertyId] || [];
+    const existing = state.chatMessages[propertyId] || { messages: [], lastActivity: 0 };
     const newMessage: Message = {
       id: Date.now().toString(),
       text,
@@ -59,7 +68,10 @@ export const useStore = create<StoreState>((set, get) => ({
     return {
       chatMessages: {
         ...state.chatMessages,
-        [propertyId]: [...existingMessages, newMessage],
+        [propertyId]: {
+          messages: [...existing.messages, newMessage],
+          lastActivity: Date.now(),
+        },
       }
     };
   }),
