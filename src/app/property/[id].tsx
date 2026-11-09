@@ -1,13 +1,16 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Feather, FontAwesome } from '@expo/vector-icons';
+import { Feather, FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useStore } from '@/store/useStore';
 
 export default function PropertyDetails() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const properties = useStore(state => state.properties);
+  const savedPropertyIds = useStore(state => state.savedPropertyIds);
+  const toggleSaved = useStore(state => state.toggleSaved);
+
   const property = properties.find(p => p.id === id);
 
   if (!property) {
@@ -18,13 +21,32 @@ export default function PropertyDetails() {
     );
   }
 
+  const isFavorite = savedPropertyIds.includes(property.id);
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.imageContainer}>
           <Image source={{ uri: property.image }} style={styles.image} />
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Feather name="chevron-left" size={32} color="#FFF" />
+          
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.8}
+          >
+            <Feather name="chevron-left" size={24} color="#000" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.favoriteButton}
+            onPress={() => toggleSaved(property.id)}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name={isFavorite ? "heart" : "heart-outline"}
+              size={22}
+              color={isFavorite ? "#FF3B30" : "#000"}
+            />
           </TouchableOpacity>
         </View>
 
@@ -94,13 +116,31 @@ const styles = StyleSheet.create({
     left: 16,
     width: 44,
     height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFF',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 50,
+    right: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   detailsContainer: {
     padding: 20,
