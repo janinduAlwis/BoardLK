@@ -1,6 +1,7 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { Feather, FontAwesome } from '@expo/vector-icons';
+import { getOptimizedImageUrl } from '@/lib/supabase';
+import { FontAwesome } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type PropertyCardProps = {
   property: {
@@ -20,7 +21,12 @@ type PropertyCardProps = {
 export default function PropertyCard({ property, onPress, onContactPress, style }: PropertyCardProps) {
   return (
     <TouchableOpacity activeOpacity={0.95} onPress={onPress} style={[styles.card, style]}>
-      <Image source={{ uri: property.image }} style={styles.image} />
+      <Image
+        source={{ uri: getOptimizedImageUrl(property.image, 900, 70) }}
+        style={styles.image}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+      />
       <View style={styles.content}>
         <Text style={styles.title} numberOfLines={1}>{property.title}</Text>
         

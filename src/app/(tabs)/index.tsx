@@ -1,24 +1,32 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, SafeAreaView } from 'react-native';
 import { Stack } from 'expo-router';
+import { useMemo } from 'react';
+import { FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
-import SearchBar from '@/components/SearchBar';
 import FilterPills from '@/components/FilterPills';
 import PropertyCard from '@/components/PropertyCard';
+import SearchBar from '@/components/SearchBar';
 import { CATEGORIES } from '@/constants/mockData';
 import { useStore } from '@/store/useStore';
+import { PROPERTY_TYPES } from '@/types/marketplace';
 import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[1]); // 'Annexes' default selected in design
   const properties = useStore(state => state.properties);
+  const filters = useStore(state => state.buyFilters);
+  const setBuyFilters = useStore(state => state.setBuyFilters);
+  const propertyCategories = ['All', ...PROPERTY_TYPES, ...CATEGORIES.filter((category) => !PROPERTY_TYPES.includes(category as (typeof PROPERTY_TYPES)[number]))];
 
-  const filteredProperties = properties.filter(p => 
-    (selectedCategory === 'All' || p.type === selectedCategory) &&
-    p.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProperties = useMemo(() => {
+    const results = properties.filter((property) => {
+      const searchableText = `${property.title} ${property.location}`.toLowerCase();
+      return (filters.propertyType === 'All' || property.type === filters.propertyType)
+        && property.price >= filters.minPrice
+        && property.price <= filters.maxPrice
+        && searchableText.includes(filters.searchQuery.toLowerCase());
+    });
+    return results;
+  }, [properties, filters]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -26,15 +34,15 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <SearchBar 
           placeholder="Search for boarding..." 
-          value={searchQuery}
-          onChangeText={setSearchQuery}
+          value={filters.searchQuery}
+          onChangeText={(searchQuery) => setBuyFilters({ searchQuery })}
           style={styles.searchBar}
           onSearchPress={() => router.push('/filters')}
         />
         <FilterPills 
-          categories={['All', ...CATEGORIES]} 
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
+          categories={propertyCategories}
+          selectedCategory={filters.propertyType}
+          onSelectCategory={(propertyType) => setBuyFilters({ propertyType })}
         />
       </View>
       
@@ -50,6 +58,7 @@ export default function HomeScreen() {
         )}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={<View style={styles.empty}><Text style={styles.emptyTitle}>No properties found</Text><Text style={styles.emptyText}>Try changing your search or filters.</Text></View>}
       />
     </SafeAreaView>
   );
@@ -69,5 +78,18 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-  }
+  },
+  empty: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000',
+  },
+  emptyText: {
+    marginTop: 6,
+    color: '#8E8E93',
+  },
 });

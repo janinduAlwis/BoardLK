@@ -1,8 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Feather, FontAwesome, Ionicons } from '@expo/vector-icons';
+import PropertyGallery from '@/components/PropertyGallery';
+import { listPropertyReviews } from '@/services/marketplace';
 import { useStore } from '@/store/useStore';
+import type { PropertyReview } from '@/types/marketplace';
+import { Feather, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function PropertyDetails() {
   const { id } = useLocalSearchParams();
@@ -22,12 +25,24 @@ export default function PropertyDetails() {
   }
 
   const isFavorite = savedPropertyIds.includes(property.id);
+  const propertyImages = (property as typeof property & { images?: string[] }).images || [property.image];
+  const [reviews, setReviews] = useState<PropertyReview[]>([]);
+  const sampleReviews = [
+    { name: 'Kavindu S.', rating: 5, date: '2 weeks ago', text: 'Great location and a clean, comfortable place. The owner was helpful throughout.' },
+    { name: 'Madhavi R.', rating: 4, date: '1 month ago', text: 'Quiet neighborhood with easy access to shops and campus.' },
+  ];
+
+  useEffect(() => {
+    void listPropertyReviews(property.id).then(setReviews).catch(() => setReviews([]));
+  }, [property.id]);
+
+  const visibleReviews = reviews.length > 0 ? reviews : sampleReviews;
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.imageContainer}>
-          <Image source={{ uri: property.image }} style={styles.image} />
+          <PropertyGallery images={propertyImages} />
           
           <TouchableOpacity
             style={styles.backButton}
@@ -76,6 +91,38 @@ export default function PropertyDetails() {
           <Text style={styles.description}>
             Located centrally close to all university amenities, this secure annex is ideal for a student...
           </Text>
+
+          <View style={styles.reviewsHeader}>
+            <Text style={styles.reviewsTitle}>Reviews</Text>
+            <Text style={styles.reviewsCount}>{reviews.length || visibleReviews.length} reviews</Text>
+          </View>
+
+          <View style={styles.reviewSummary}>
+            <Text style={styles.reviewScore}>{property.rating.toFixed(1)}</Text>
+            <View>
+              <View style={styles.reviewStars}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <FontAwesome key={star} name={star <= Math.round(property.rating) ? 'star' : 'star-o'} size={15} color="#FFB020" />
+                ))}
+              </View>
+              <Text style={styles.reviewSummaryText}>Overall rating</Text>
+            </View>
+          </View>
+
+          {visibleReviews.map((review) => (
+            <View key={'id' in review ? review.id : review.name} style={styles.reviewCard}>
+              <View style={styles.reviewCardHeader}>
+                <Text style={styles.reviewerName}>{'authorName' in review ? review.authorName : review.name}</Text>
+                <Text style={styles.reviewDate}>{'authorName' in review ? 'Recent' : review.date}</Text>
+              </View>
+              <View style={styles.reviewStars}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <FontAwesome key={star} name={star <= review.rating ? 'star' : 'star-o'} size={13} color="#FFB020" />
+                ))}
+              </View>
+              <Text style={styles.reviewText}>{review.text}</Text>
+            </View>
+          ))}
 
           <TouchableOpacity style={styles.reviewButton} onPress={() => router.push(`/review?id=${property.id}`)}>
             <Text style={styles.reviewButtonText}>Write a Review</Text>
@@ -190,6 +237,70 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: '#1E1E1E',
     marginBottom: 32,
+  },
+  reviewsHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  reviewsTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#000',
+  },
+  reviewsCount: {
+    fontSize: 13,
+    color: '#8E8E93',
+  },
+  reviewSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 16,
+    borderRadius: 14,
+    backgroundColor: '#F9F9F9',
+    marginBottom: 16,
+  },
+  reviewScore: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: '#000',
+  },
+  reviewStars: {
+    flexDirection: 'row',
+    gap: 3,
+  },
+  reviewSummaryText: {
+    marginTop: 4,
+    fontSize: 12,
+    color: '#8E8E93',
+  },
+  reviewCard: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EAEAEA',
+  },
+  reviewCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 7,
+  },
+  reviewerName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#000',
+  },
+  reviewDate: {
+    fontSize: 12,
+    color: '#8E8E93',
+  },
+  reviewText: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: '#1E1E1E',
+    marginTop: 8,
   },
   reviewButton: {
     width: '100%',

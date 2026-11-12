@@ -1,8 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
 import { useStore } from '@/store/useStore';
+import { Feather } from '@expo/vector-icons';
+import { Stack, useRouter } from 'expo-router';
+import { Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -44,6 +43,26 @@ export default function ProfileScreen() {
         >
           <Feather name="heart" size={24} color="#000" style={styles.icon} />
           <Text style={styles.menuText}>Saved Properties</Text>
+          <Feather name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          activeOpacity={0.7}
+          onPress={() => router.push('/(tabs)/sell')}
+        >
+          <Feather name="plus-square" size={24} color="#000" style={styles.icon} />
+          <Text style={styles.menuText}>Sell Property</Text>
+          <Feather name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          activeOpacity={0.7}
+          onPress={() => router.push('/my-listings')}
+        >
+          <Feather name="list" size={24} color="#000" style={styles.icon} />
+          <Text style={styles.menuText}>My Listings</Text>
           <Feather name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
 

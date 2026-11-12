@@ -1,6 +1,5 @@
-import React from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { Keyboard, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 type SearchBarProps = {
   placeholder?: string;
@@ -19,6 +18,12 @@ export default function SearchBar({ placeholder = 'Search...', value, onChangeTe
         placeholderTextColor="#8E8E93"
         value={value}
         onChangeText={onChangeText}
+        returnKeyType="search"
+        blurOnSubmit
+        onSubmitEditing={() => {
+          Keyboard.dismiss();
+          onSearchPress?.();
+        }}
       />
       {onSearchPress ? (
         <TouchableOpacity onPress={onSearchPress}>

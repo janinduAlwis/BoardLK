@@ -1,0 +1,109 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Check authentication
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Check document ownership
+    function owns(resource) {
+      return signedIn()
+        && resource.data.ownerId == request.auth.uid;
+    }
+
+    // USER PROFILES
+    match /users/{userId} {
+      allow read, write: if signedIn()
+        && request.auth.uid == userId;
+    }
+
+    // PROPERTY LISTINGS
+    match /properties/{propertyId} {
+
+      // Read available properties, demo properties,
+      // and properties owned by the current user.
+      allow read: if resource.data.status == 'Available'
+        || resource.data.isDemo == true
+        || owns(resource);
+
+      // Create listings only for the authenticated owner.
+      allow create: if signedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.isDemo == false;
+
+      // Update only your own non-demo listings.
+      // Owner ID and demo status cannot be changed.
+      allow update: if owns(resource)
+        && resource.data.isDemo == false
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.isDemo == resource.data.isDemo;
+
+      // Delete only your own non-demo listings.
+      allow delete: if owns(resource)
+        && resource.data.isDemo == false;
+    }
+
+    // PROPERTY REVIEWS
+    match /reviews/{reviewId} {
+
+      // Public review reading
+      allow read: if true;
+
+      // Create reviews with valid details.
+      allow create: if signedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.rating is number
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0;
+
+      // Update your own reviews.
+      allow update: if signedIn()
+        && resource.data.authorId == request.auth.uid
+        && request.resource.data.authorId == resource.data.authorId
+        && request.resource.data.rating is number
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0;
+
+      // Delete your own reviews.
+      allow delete: if signedIn()
+        && resource.data.authorId == request.auth.uid;
+    }
+
+    // CONVERSATIONS
+    match /conversations/{conversationId} {
+
+      // Only participants can read conversations.
+      allow read: if signedIn()
+        && request.auth.uid in resource.data.participantIds;
+
+      // Participants can update without changing the participant list.
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.participantIds
+        && request.resource.data.participantIds == resource.data.participantIds;
+
+      // Authenticated users can create conversations
+      // if they are included in the participant list.
+      allow create: if signedIn()
+        && request.resource.data.participantIds is list
+        && request.auth.uid in request.resource.data.participantIds;
+
+      // CONVERSATION MESSAGES
+      match /messages/{messageId} {
+
+        // Only participants can read and create messages.
+        allow read, create: if signedIn()
+          && request.auth.uid in get(
+            /databases/$(database)/documents/conversations/$(conversationId)
+          ).data.participantIds;
+      }
+    }
+  }
+}

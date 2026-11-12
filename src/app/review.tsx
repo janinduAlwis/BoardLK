@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Feather, FontAwesome } from '@expo/vector-icons';
+import { auth } from '@/lib/firebase';
+import { createPropertyReview } from '@/services/marketplace';
 import { useStore } from '@/store/useStore';
+import { Feather, FontAwesome } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Image, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function ReviewScreen() {
   const router = useRouter();
@@ -57,11 +59,34 @@ export default function ReviewScreen() {
             placeholderTextColor="#8E8E93"
             multiline
             textAlignVertical="top"
+            returnKeyType="done"
+            blurOnSubmit
+            onSubmitEditing={() => Keyboard.dismiss()}
             value={reviewText}
             onChangeText={setReviewText}
           />
 
-          <TouchableOpacity style={styles.submitButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.submitButton}
+            onPress={async () => {
+              if (!auth?.currentUser || rating === 0 || !reviewText.trim()) {
+                alert('Please sign in, choose a rating, and write a review.');
+                return;
+              }
+              try {
+                await createPropertyReview({
+                  propertyId: property.id,
+                  authorId: auth.currentUser.uid,
+                  authorName: auth.currentUser.displayName || auth.currentUser.email || 'BoardLK member',
+                  rating,
+                  text: reviewText.trim(),
+                });
+                router.back();
+              } catch (error) {
+                alert(error instanceof Error ? error.message : 'Unable to submit review.');
+              }
+            }}
+          >
             <Text style={styles.submitButtonText}>Submit Review</Text>
           </TouchableOpacity>
         </View>

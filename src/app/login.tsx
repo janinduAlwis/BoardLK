@@ -1,22 +1,53 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
+import { auth, isFirebaseConfigured } from '@/lib/firebase';
+import { useStore } from '@/store/useStore';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useStore } from '@/store/useStore';
+import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
+import { useState } from 'react';
+import { Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
   const login = useStore((state) => state.login);
 
-  const handleLogin = () => {
-    if (email) {
-      login(email);
+  const handleLogin = async () => {
+    if (!email || !password) {
+      alert('Please enter your email and password');
+      return;
+    }
+    setIsBusy(true);
+    try {
+      if (isFirebaseConfigured && auth) {
+        const credentials = isRegistering
+          ? await createUserWithEmailAndPassword(auth, email.trim(), password)
+          : await signInWithEmailAndPassword(auth, email.trim(), password);
+        login(credentials.user.email || email.trim());
+      } else {
+        login(email.trim());
+      }
       router.replace('/(tabs)');
-    } else {
-      alert('Please enter your email');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Unable to authenticate');
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!email || !isFirebaseConfigured || !auth) {
+      alert('Enter your email after configuring Firebase to reset your password.');
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      alert('Password reset email sent.');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Unable to send reset email');
     }
   };
 
@@ -27,8 +58,8 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.content}>
-          <Text style={styles.title}>Welcome Back!</Text>
-          <Text style={styles.subtitle}>Please enter your details to sign in</Text>
+          <Text style={styles.title}>{isRegistering ? 'Create Account' : 'Welcome Back!'}</Text>
+          <Text style={styles.subtitle}>{isRegistering ? 'Create your BoardLK account' : 'Please enter your details to sign in'}</Text>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
@@ -38,6 +69,8 @@ export default function LoginScreen() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              returnKeyType="next"
+              blurOnSubmit={false}
             />
           </View>
 
@@ -49,6 +82,8 @@ export default function LoginScreen() {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
+                returnKeyType="done"
+                onSubmitEditing={() => Keyboard.dismiss()}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Feather name={showPassword ? "eye-off" : "eye"} size={20} color="#8E8E93" />
@@ -56,12 +91,15 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.forgotPassword}>
+          <TouchableOpacity style={styles.forgotPassword} onPress={handleResetPassword}>
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Log In</Text>
+            <Text style={styles.loginButtonText}>{isBusy ? 'Please wait...' : isRegistering ? 'Create Account' : 'Log In'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.modeButton} onPress={() => setIsRegistering((current) => !current)}>
+            <Text style={styles.modeButtonText}>{isRegistering ? 'Already have an account? Log in' : 'Need an account? Create one'}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -141,5 +179,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  modeButton: {
+    alignItems: 'center',
+    paddingVertical: 18,
+  },
+  modeButtonText: {
+    color: '#000',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

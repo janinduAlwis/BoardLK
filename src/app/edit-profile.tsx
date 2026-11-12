@@ -1,19 +1,20 @@
-import React, { useState } from 'react';
+import { useStore } from '@/store/useStore';
+import { Feather } from '@expo/vector-icons';
+import { Stack, useRouter } from 'expo-router';
+import { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
   Image,
-  TextInput,
-  ScrollView,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
-import { useStore } from '@/store/useStore';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -55,6 +56,8 @@ export default function EditProfileScreen() {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
         >
           {/* Avatar with Change Photo overlay */}
           <View style={styles.avatarContainer}>
@@ -77,6 +80,7 @@ export default function EditProfileScreen() {
                 onChangeText={setFullName}
                 placeholder="Full Name"
                 placeholderTextColor="#8E8E93"
+                returnKeyType="next"
               />
             </View>
 
@@ -91,6 +95,7 @@ export default function EditProfileScreen() {
                 placeholderTextColor="#8E8E93"
                 keyboardType="email-address"
                 autoCapitalize="none"
+                returnKeyType="next"
               />
             </View>
 
@@ -103,6 +108,7 @@ export default function EditProfileScreen() {
                 onChangeText={setWorkplace}
                 placeholder="University/Workplace"
                 placeholderTextColor="#8E8E93"
+                returnKeyType="next"
               />
             </View>
 
@@ -117,6 +123,8 @@ export default function EditProfileScreen() {
                   secureTextEntry={!showPassword}
                   placeholder="Password"
                   placeholderTextColor="#8E8E93"
+                  returnKeyType="done"
+                  onSubmitEditing={() => Keyboard.dismiss()}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                   <Feather

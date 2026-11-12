@@ -70,6 +70,20 @@ BoardLK/
 
 ## 🚀 Getting Started
 
+## Firebase marketplace setup
+
+The repository uses a hybrid backend: Firebase Authentication, Cloud Firestore, and Cloud Messaging; Supabase Storage for property photos. Firebase is intentionally configuration-gated: the app keeps the existing demo data until valid public Expo Firebase variables are supplied, and publishing is disabled until a Firebase-authenticated user exists.
+
+1. Create a Firebase project and register a Web app in the Firebase console.
+2. Enable Email/Password Authentication and Firestore. Configure Firebase Cloud Messaging when push notifications are added.
+3. Create a Supabase Storage bucket named `property-images` and run `supabase-storage-policies.sql` in the Supabase SQL Editor for development uploads.
+4. Copy `.env.example` to `.env` and fill in both the `EXPO_PUBLIC_FIREBASE_*` and `EXPO_PUBLIC_SUPABASE_*` values.
+5. Install dependencies with `npm install`.
+6. Deploy Firestore rules and indexes with `firebase deploy --only firestore:rules,firestore:indexes`.
+7. Start Expo with `npx expo start`.
+
+Properties are stored in Firebase `properties`; user profiles in `users`; conversations and nested `messages` are protected by participant rules. Uploaded images use the Supabase Storage path `properties/{propertyId}/{imageId}`. The mobile app uses Firebase auth tokens, so production Supabase uploads should go through a trusted upload gateway or Edge Function that verifies the Firebase ID token; never put a Supabase service-role key in the app. Demo data remains in `src/constants/mockData.ts` until a Firebase project is available for an idempotent seed run.
+
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (v18 or higher recommended)

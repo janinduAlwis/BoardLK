@@ -1,5 +1,7 @@
+import { CHAT_CONVERSATIONS, PROPERTIES } from '@/constants/mockData';
+import { isFirebaseConfigured } from '@/lib/firebase';
+import { listAvailableProperties } from '@/services/marketplace';
 import { create } from 'zustand';
-import { PROPERTIES, CHAT_CONVERSATIONS } from '@/constants/mockData';
 
 type User = {
   email: string;
@@ -15,6 +17,15 @@ type Message = {
 type ChatConversation = {
   messages: Message[];
   lastActivity: number;
+};
+
+export type BuyFilters = {
+  searchQuery: string;
+  propertyType: string;
+  listingPurpose: 'All' | 'For Sale' | 'For Rent';
+  minPrice: number;
+  maxPrice: number;
+  sortBy: 'newest' | 'price-low' | 'price-high';
 };
 
 export type UserProfile = {
@@ -38,6 +49,19 @@ type StoreState = {
   toggleSaved: (propertyId: string) => void;
   isSaved: (propertyId: string) => boolean;
   getMessages: (propertyId: string) => Message[];
+  loadProperties: () => Promise<void>;
+  buyFilters: BuyFilters;
+  setBuyFilters: (updates: Partial<BuyFilters>) => void;
+  resetBuyFilters: () => void;
+};
+
+const defaultBuyFilters: BuyFilters = {
+  searchQuery: '',
+  propertyType: 'All',
+  listingPurpose: 'All',
+  minPrice: 0,
+  maxPrice: 50000000,
+  sortBy: 'newest',
 };
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -52,6 +76,7 @@ export const useStore = create<StoreState>((set, get) => ({
   properties: PROPERTIES,
   savedPropertyIds: ['1', '2'], // pre-saved for demo
   chatMessages: CHAT_CONVERSATIONS,
+  buyFilters: defaultBuyFilters,
   
   login: (email) => set({ user: { email } }),
   
@@ -75,6 +100,32 @@ export const useStore = create<StoreState>((set, get) => ({
   getMessages: (propertyId) => {
     const conv = get().chatMessages[propertyId];
     return conv ? conv.messages : [];
+  },
+
+  setBuyFilters: (updates) => set((state) => ({
+    buyFilters: { ...state.buyFilters, ...updates },
+  })),
+
+  resetBuyFilters: () => set({ buyFilters: defaultBuyFilters }),
+
+  loadProperties: async () => {
+    if (!isFirebaseConfigured) return;
+    const remoteProperties = await listAvailableProperties();
+    set({
+      properties: remoteProperties.map((property) => ({
+        id: property.id,
+        title: property.title,
+        price: property.price,
+        location: property.location.address,
+        rating: property.rating,
+        image: property.images[0] || '',
+        type: property.propertyType,
+        lat: property.location.latitude,
+        lng: property.location.longitude,
+        ownerName: property.ownerName,
+        ownerAvatar: property.ownerAvatar || '',
+      })),
+    });
   },
 
   addMessage: (propertyId, text) => set((state) => {

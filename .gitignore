@@ -41,3 +41,11 @@ example
 # generated native folders
 /ios
 /android
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Firebase debug logs
+firebase-debug.log

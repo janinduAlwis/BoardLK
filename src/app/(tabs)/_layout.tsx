@@ -1,5 +1,5 @@
-import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
   return (
@@ -30,6 +30,12 @@ export default function TabLayout() {
         name="map"
         options={{
           tabBarIcon: ({ focused, color }) => <Ionicons name={focused ? "map" : "map-outline"} size={26} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="sell"
+        options={{
+          tabBarIcon: ({ focused, color }) => <Ionicons name={focused ? "add-circle" : "add-circle-outline"} size={26} color={color} />,
         }}
       />
       <Tabs.Screen

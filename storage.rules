@@ -1,0 +1,11 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /properties/{propertyId}/{imageId} {
+      allow read: if true;
+      allow write, delete: if request.auth != null
+        && firestore.get(/databases/(default)/documents/properties/$(propertyId)).data.ownerId == request.auth.uid
+        && firestore.get(/databases/(default)/documents/properties/$(propertyId)).data.isDemo == false;
+    }
+  }
+}

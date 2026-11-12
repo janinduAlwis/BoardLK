@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, SafeAreaView } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
 import { useStore } from '@/store/useStore';
+import { Feather } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Image, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function ChatScreen() {
   const router = useRouter();
@@ -55,7 +55,7 @@ export default function ChatScreen() {
           </View>
         </View>
 
-        <ScrollView style={styles.chatArea} contentContainerStyle={styles.chatContent}>
+        <ScrollView style={styles.chatArea} contentContainerStyle={styles.chatContent} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled">
           {messages.map((msg) => (
             <View key={msg.id} style={[styles.messageWrapper, msg.sender === 'user' ? styles.messageWrapperUser : styles.messageWrapperOwner]}>
               <View style={[styles.messageBubble, msg.sender === 'user' ? styles.messageBubbleUser : styles.messageBubbleOwner]}>
@@ -73,7 +73,9 @@ export default function ChatScreen() {
               placeholderTextColor="#8E8E93"
               value={message}
               onChangeText={setMessage}
+              returnKeyType="send"
               onSubmitEditing={handleSend}
+              blurOnSubmit
             />
             <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
               <Feather name="send" size={20} color="#000" />

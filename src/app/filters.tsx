@@ -1,18 +1,23 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, SafeAreaView, ScrollView } from 'react-native';
+import RangeSlider from '@/components/RangeSlider';
+import SearchBar from '@/components/SearchBar';
+import { CATEGORIES } from '@/constants/mockData';
+import { useStore } from '@/store/useStore';
+import { PROPERTY_TYPES } from '@/types/marketplace';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import SearchBar from '@/components/SearchBar';
-import RangeSlider from '@/components/RangeSlider';
+import { useState } from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function FiltersScreen() {
   const router = useRouter();
-  const [attachedBathroom, setAttachedBathroom] = useState(true);
-  const [girlsOnly, setGirlsOnly] = useState(false);
-  const [boysOnly, setBoysOnly] = useState(false);
-  const [propertyType, setPropertyType] = useState('Rooms');
-  const [minPrice, setMinPrice] = useState(10000);
-  const [maxPrice, setMaxPrice] = useState(40000);
+  const filters = useStore(state => state.buyFilters);
+  const setBuyFilters = useStore(state => state.setBuyFilters);
+  const resetBuyFilters = useStore(state => state.resetBuyFilters);
+  const [searchQuery, setSearchQuery] = useState(filters.searchQuery);
+  const [propertyType, setPropertyType] = useState(filters.propertyType);
+  const [minPrice, setMinPrice] = useState(filters.minPrice);
+  const [maxPrice, setMaxPrice] = useState(filters.maxPrice);
+  const propertyTypes = ['All', ...PROPERTY_TYPES, ...CATEGORIES.filter((category) => !PROPERTY_TYPES.includes(category as (typeof PROPERTY_TYPES)[number]))];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -24,15 +29,15 @@ export default function FiltersScreen() {
         <View style={{ width: 28 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <SearchBar placeholder="Search for boarding..." style={styles.searchBar} />
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled">
+        <SearchBar placeholder="Search title or location..." value={searchQuery} onChangeText={setSearchQuery} style={styles.searchBar} />
 
         <Text style={styles.sectionTitle}>Price Range</Text>
         <RangeSlider 
-          min={5000} 
-          max={100000} 
-          initialLow={10000} 
-          initialHigh={40000} 
+          min={0}
+          max={50000000}
+          initialLow={minPrice}
+          initialHigh={maxPrice}
           onValueChanged={(low, high) => {
             setMinPrice(low);
             setMaxPrice(high);
@@ -45,7 +50,7 @@ export default function FiltersScreen() {
 
         <Text style={styles.sectionTitle}>Property Type</Text>
         <View style={styles.pillsContainer}>
-          {['Rooms', 'Annexes', 'Apartments'].map(type => (
+          {propertyTypes.map(type => (
             <TouchableOpacity 
               key={type}
               style={[styles.pill, propertyType === type && styles.pillActive]}
@@ -56,39 +61,14 @@ export default function FiltersScreen() {
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>Preferences</Text>
-        <View style={styles.preferenceRow}>
-          <Text style={styles.preferenceText}>Attached Bathroom</Text>
-          <Switch 
-            value={attachedBathroom} 
-            onValueChange={setAttachedBathroom} 
-            trackColor={{ false: '#EAEAEA', true: '#1E1E1E' }}
-            thumbColor={'#FFF'}
-          />
-        </View>
-        <View style={styles.preferenceRow}>
-          <Text style={styles.preferenceText}>Girls Only</Text>
-          <Switch 
-            value={girlsOnly} 
-            onValueChange={setGirlsOnly} 
-            trackColor={{ false: '#EAEAEA', true: '#1E1E1E' }}
-            thumbColor={'#FFF'}
-          />
-        </View>
-        <View style={styles.preferenceRow}>
-          <Text style={styles.preferenceText}>Boys Only</Text>
-          <Switch 
-            value={boysOnly} 
-            onValueChange={setBoysOnly} 
-            trackColor={{ false: '#EAEAEA', true: '#1E1E1E' }}
-            thumbColor={'#FFF'}
-          />
-        </View>
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.applyBtn} onPress={() => router.back()}>
-          <Text style={styles.applyBtnText}>Show 12 Results</Text>
+        <TouchableOpacity style={styles.resetBtn} onPress={() => { resetBuyFilters(); setSearchQuery(''); setPropertyType('All'); setMinPrice(0); setMaxPrice(50000000); }}>
+          <Text style={styles.resetBtnText}>Reset</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.applyBtn} onPress={() => { setBuyFilters({ searchQuery, propertyType, minPrice, maxPrice, listingPurpose: 'All' }); router.back(); }}>
+          <Text style={styles.applyBtnText}>Apply filters</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -164,15 +144,14 @@ const styles = StyleSheet.create({
   pillTextActive: {
     color: '#FFF',
   },
-  preferenceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  resetBtn: {
     alignItems: 'center',
-    marginBottom: 24,
+    paddingVertical: 12,
+    marginBottom: 4,
   },
-  preferenceText: {
-    fontSize: 16,
-    color: '#1E1E1E',
+  resetBtnText: {
+    color: '#8E8E93',
+    fontWeight: '700',
   },
   footer: {
     padding: 20,
